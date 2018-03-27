@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,20 +20,41 @@
  */
 
 #ifndef	_SIGNAL_H
-#define _SIGNAL_H
+
+#if !defined __need_sig_atomic_t && !defined __need_sigset_t
+# define _SIGNAL_H
+#endif
 
 #include <features.h>
 
 __BEGIN_DECLS
 
+#include <bits/sigset.h>		/* __sigset_t, __sig_atomic_t.  */
+
+/* An integral type that can be modified atomically, without the
+   possibility of a signal arriving in the middle of the operation.  */
+#if defined __need_sig_atomic_t || defined _SIGNAL_H
+# ifndef __sig_atomic_t_defined
+#  define __sig_atomic_t_defined
+__BEGIN_NAMESPACE_STD
+typedef __sig_atomic_t sig_atomic_t;
+__END_NAMESPACE_STD
+# endif
+# undef __need_sig_atomic_t
+#endif
+
+#if defined __need_sigset_t || (defined _SIGNAL_H && defined __USE_POSIX)
+# ifndef __sigset_t_defined
+#  define __sigset_t_defined
+typedef __sigset_t sigset_t;
+# endif
+# undef __need_sigset_t
+#endif
+
+#ifdef _SIGNAL_H
+
 #include <bits/types.h>
 #include <bits/signum.h>
-
-#include <bits/types/sig_atomic_t.h>
-
-#if defined __USE_POSIX
-#include <bits/types/sigset_t.h>
-#endif
 
 #if defined __USE_XOPEN || defined __USE_XOPEN2K
 # ifndef __pid_t_defined
@@ -50,17 +71,13 @@ typedef __uid_t uid_t;
 
 #ifdef __USE_POSIX199309
 /* We need `struct timespec' later on.  */
-# include <bits/types/struct_timespec.h>
+# define __need_timespec
+# include <time.h>
 #endif
 
 #if defined __USE_POSIX199309 || defined __USE_XOPEN_EXTENDED
-# include <bits/types/siginfo_t.h>
-# include <bits/siginfo-consts.h>
-#endif
-
-#ifdef __USE_POSIX199309
-# include <bits/types/sigevent_t.h>
-# include <bits/sigevent-consts.h>
+/* Get the `siginfo_t' type plus the needed symbols.  */
+# include <bits/siginfo.h>
 #endif
 
 
@@ -80,7 +97,8 @@ extern __sighandler_t sysv_signal (int __sig, __sighandler_t __handler)
 /* Set the handler for the signal SIG to HANDLER, returning the old
    handler, or SIG_ERR on error.
    By default `signal' has the BSD semantic.  */
-#ifdef __USE_MISC
+__BEGIN_NAMESPACE_STD
+#ifdef __USE_BSD
 extern __sighandler_t signal (int __sig, __sighandler_t __handler)
      __THROW;
 #else
@@ -93,8 +111,9 @@ extern __sighandler_t __REDIRECT_NTH (signal,
 #  define signal __sysv_signal
 # endif
 #endif
+__END_NAMESPACE_STD
 
-#if defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K8
+#ifdef __USE_XOPEN
 /* The X/Open definition of `signal' conflicts with the BSD version.
    So they defined another function `bsd_signal'.  */
 extern __sighandler_t bsd_signal (int __sig, __sighandler_t __handler)
@@ -108,27 +127,31 @@ extern __sighandler_t bsd_signal (int __sig, __sighandler_t __handler)
 extern int kill (__pid_t __pid, int __sig) __THROW;
 #endif /* Use POSIX.  */
 
-#if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
+#if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
 /* Send SIG to all processes in process group PGRP.
    If PGRP is zero, send SIG to all processes in
    the current process's process group.  */
 extern int killpg (__pid_t __pgrp, int __sig) __THROW;
-#endif /* Use misc || X/Open Unix.  */
+#endif /* Use BSD || X/Open Unix.  */
 
+__BEGIN_NAMESPACE_STD
 /* Raise signal SIG, i.e., send SIG to yourself.  */
 extern int raise (int __sig) __THROW;
+__END_NAMESPACE_STD
 
-#ifdef __USE_MISC
+#ifdef __USE_SVID
 /* SVID names for the same things.  */
 extern __sighandler_t ssignal (int __sig, __sighandler_t __handler)
      __THROW;
 extern int gsignal (int __sig) __THROW;
-#endif /* Use misc.  */
+#endif /* Use SVID.  */
 
-#ifdef __USE_XOPEN2K8
+#if defined __USE_MISC || defined __USE_XOPEN2K
 /* Print a message describing the meaning of the given signal number.  */
 extern void psignal (int __sig, const char *__s);
+#endif /* Use misc or POSIX 2008.  */
 
+#ifdef __USE_XOPEN2K
 /* Print a message describing the meaning of the given signal information.  */
 extern void psiginfo (const siginfo_t *__pinfo, const char *__s);
 #endif /* POSIX 2008.  */
@@ -141,26 +164,26 @@ extern void psiginfo (const siginfo_t *__pinfo, const char *__s);
 
    This function is a cancellation point and therefore not marked with
    __THROW.  */
+extern int __sigpause (int __sig_or_mask, int __is_sig);
 
-#ifdef __USE_XOPEN_EXTENDED
+#ifdef __USE_XOPEN
 # ifdef __GNUC__
 extern int sigpause (int __sig) __asm__ ("__xpg_sigpause");
 # else
-extern int __sigpause (int __sig_or_mask, int __is_sig);
 /* Remove a signal from the signal mask and suspend the process.  */
 #  define sigpause(sig) __sigpause ((sig), 1)
 # endif
 #endif
 
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /* None of the following functions should be used anymore.  They are here
    only for compatibility.  A single word (`int') is not guaranteed to be
    enough to hold a complete signal mask and therefore these functions
    simply do not work in many situations.  Use `sigprocmask' instead.  */
 
 /* Compute mask for signal SIG.  */
-# define sigmask(sig) ((int)(1u << ((sig) - 1)))
+# define sigmask(sig)	__sigmask(sig)
 
 /* Block signals in MASK, returning the old mask.  */
 extern int sigblock (int __mask) __THROW __attribute_deprecated__;
@@ -170,7 +193,7 @@ extern int sigsetmask (int __mask) __THROW __attribute_deprecated__;
 
 /* Return currently selected signal mask.  */
 extern int siggetmask (void) __THROW __attribute_deprecated__;
-#endif /* Use misc.  */
+#endif /* Use BSD.  */
 
 
 #ifdef __USE_MISC
@@ -182,7 +205,7 @@ typedef __sighandler_t sighandler_t;
 #endif
 
 /* 4.4 BSD uses the name `sig_t' for this.  */
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 typedef __sighandler_t sig_t;
 #endif
 
@@ -240,14 +263,12 @@ extern int sigaction (int __sig, const struct sigaction *__restrict __act,
 extern int sigpending (sigset_t *__set) __THROW __nonnull ((1));
 
 
-# ifdef __USE_POSIX199506
 /* Select any of pending signals from SET or wait for any to arrive.
 
    This function is a cancellation point and therefore not marked with
    __THROW.  */
 extern int sigwait (const sigset_t *__restrict __set, int *__restrict __sig)
      __nonnull ((1, 2));
-# endif /* Use POSIX 1995.  */
 
 # ifdef __USE_POSIX199309
 /* Select any of pending signals from SET and place information in INFO.
@@ -275,12 +296,36 @@ extern int sigqueue (__pid_t __pid, int __sig, const union sigval __val)
 
 #endif /* Use POSIX.  */
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 
 /* Names of the signals.  This variable exists only for compatibility.
    Use `strsignal' instead (see <string.h>).  */
 extern const char *const _sys_siglist[_NSIG];
 extern const char *const sys_siglist[_NSIG];
+
+/* Structure passed to `sigvec'.  */
+struct sigvec
+  {
+    __sighandler_t sv_handler;	/* Signal handler.  */
+    int sv_mask;		/* Mask of signals to be blocked.  */
+
+    int sv_flags;		/* Flags (see below).  */
+# define sv_onstack	sv_flags /* 4.2 BSD compatibility.  */
+  };
+
+/* Bits in `sv_flags'.  */
+# define SV_ONSTACK	(1 << 0)/* Take the signal on the signal stack.  */
+# define SV_INTERRUPT	(1 << 1)/* Do not restart system calls.  */
+# define SV_RESETHAND	(1 << 2)/* Reset handler to SIG_DFL on receipt.  */
+
+
+/* If VEC is non-NULL, set the handler for SIG to the `sv_handler' member
+   of VEC.  The signals in `sv_mask' will be blocked while the handler runs.
+   If the SV_RESETHAND bit is set in `sv_flags', the handler for SIG will be
+   reset to SIG_DFL before `sv_handler' is entered.  If OVEC is non-NULL,
+   it is filled in with the old information for SIG.  */
+extern int sigvec (int __sig, const struct sigvec *__vec,
+		   struct sigvec *__ovec) __THROW;
 
 
 /* Get machine-dependent `struct sigcontext' and signal subcodes.  */
@@ -289,48 +334,36 @@ extern const char *const sys_siglist[_NSIG];
 /* Restore the state saved in SCP.  */
 extern int sigreturn (struct sigcontext *__scp) __THROW;
 
-#endif /* Use misc.  */
+#endif /*  use BSD.  */
 
 
-#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
+#if defined __USE_BSD || defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
 # define __need_size_t
 # include <stddef.h>
 
-# include <bits/types/stack_t.h>
-# if defined __USE_XOPEN || defined __USE_XOPEN2K8
-/* This will define `ucontext_t' and `mcontext_t'.  */
-#  include <sys/ucontext.h>
-# endif
-#endif /* Use POSIX.1-2008 or X/Open Unix.  */
-
-#if defined __USE_XOPEN_EXTENDED || defined __USE_MISC
 /* If INTERRUPT is nonzero, make signal SIG interrupt system calls
    (causing them to fail with EINTR); if INTERRUPT is zero, make system
    calls be restarted after signal SIG.  */
 extern int siginterrupt (int __sig, int __interrupt) __THROW;
 
 # include <bits/sigstack.h>
-# include <bits/ss_flags.h>
+# if defined __USE_XOPEN || defined __USE_XOPEN2K8
+/* This will define `ucontext_t' and `mcontext_t'.  */
+#  include <sys/ucontext.h>
+# endif
 
-/* Alternate signal handler stack interface.
-   This interface should always be preferred over `sigstack'.  */
-extern int sigaltstack (const stack_t *__restrict __ss,
-			stack_t *__restrict __oss) __THROW;
-#endif /* __USE_XOPEN_EXTENDED || __USE_MISC */
-
-#if ((defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K8)	\
-     || defined __USE_MISC)
-# include <bits/types/struct_sigstack.h>
-#endif
-
-#if ((defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K)	\
-     || defined __USE_MISC)
 /* Run signals handlers on the stack specified by SS (if not NULL).
    If OSS is not NULL, it is filled in with the old signal stack status.
    This interface is obsolete and on many platform not implemented.  */
 extern int sigstack (struct sigstack *__ss, struct sigstack *__oss)
      __THROW __attribute_deprecated__;
-#endif
+
+/* Alternate signal handler stack interface.
+   This interface should always be preferred over `sigstack'.  */
+extern int sigaltstack (const struct sigaltstack *__restrict __ss,
+			struct sigaltstack *__restrict __oss) __THROW;
+
+#endif /* use BSD or X/Open Unix.  */
 
 #ifdef __USE_XOPEN_EXTENDED
 /* Simplified interface for signal management.  */
@@ -363,8 +396,7 @@ extern int __libc_current_sigrtmin (void) __THROW;
 /* Return number of available real-time signal with lowest priority.  */
 extern int __libc_current_sigrtmax (void) __THROW;
 
-#define SIGRTMIN        (__libc_current_sigrtmin ())
-#define SIGRTMAX        (__libc_current_sigrtmax ())
+#endif /* signal.h  */
 
 __END_DECLS
 

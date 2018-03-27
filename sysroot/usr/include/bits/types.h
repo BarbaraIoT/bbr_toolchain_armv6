@@ -1,5 +1,5 @@
 /* bits/types.h -- definitions of __*_t types underlying *_t types.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -54,15 +54,6 @@ typedef unsigned long int __u_quad_t;
 #else
 __extension__ typedef long long int __quad_t;
 __extension__ typedef unsigned long long int __u_quad_t;
-#endif
-
-/* Largest integral types.  */
-#if __WORDSIZE == 64
-typedef long int __intmax_t;
-typedef unsigned long int __uintmax_t;
-#else
-__extension__ typedef long long int __intmax_t;
-__extension__ typedef unsigned long long int __uintmax_t;
 #endif
 
 
@@ -197,10 +188,6 @@ __STD_TYPE __SWORD_TYPE __intptr_t;
 /* Duplicate info from sys/socket.h.  */
 __STD_TYPE __U32_TYPE __socklen_t;
 
-/* C99: An integer type that can be accessed as an atomic entity,
-   even in the presence of asynchronous interrupts.
-   It is not currently necessary for this to be machine-specific.  */
-typedef int __sig_atomic_t;
 
 #undef __STD_TYPE
 

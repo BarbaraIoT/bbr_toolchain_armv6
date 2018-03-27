@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 
 #include <netinet/in.h>
 
@@ -64,10 +64,10 @@ __BEGIN_DECLS
  */
 
 struct igmp {
-  uint8_t igmp_type;             /* IGMP type */
-  uint8_t igmp_code;             /* routing code */
-  uint16_t igmp_cksum;           /* checksum */
-  struct in_addr igmp_group;     /* group address */
+  u_int8_t igmp_type;             /* IGMP type */
+  u_int8_t igmp_code;             /* routing code */
+  u_int16_t igmp_cksum;           /* checksum */
+  struct in_addr igmp_group;      /* group address */
 };
 
 #define IGMP_MINLEN			8

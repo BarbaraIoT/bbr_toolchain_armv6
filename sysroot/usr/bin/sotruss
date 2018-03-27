@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (C) 2011-2017 Free Software Foundation, Inc.
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
 # This file is part of the GNU C Library.
 
 # The GNU C Library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ unset SOTRUSS_NOINDENT
 SOTRUSS_WHICH=$$
 lib='/usr/$LIB/audit/sotruss-lib.so'
 
-do_help() {
+function do_help {
   echo $"Usage: sotruss [OPTION...] [--] EXECUTABLE [EXECUTABLE-OPTION...]
   -F, --from FROMLIST     Trace calls from objects on FROMLIST
   -T, --to TOLIST         Trace calls to objects on TOLIST
@@ -51,13 +51,13 @@ do_help() {
   exit 0
 }
 
-do_missing_arg() {
+function do_missing_arg {
   printf >&2 $"%s: option requires an argument -- '%s'\n" sotruss "$1"
   printf >&2 $"Try \`%s --help' or \`%s --usage' for more information.\n" sotruss sotruss
   exit 1
 }
 
-do_ambiguous() {
+function do_ambiguous {
   printf >&2 $"%s: option is ambiguous; possibilities:"
   while test $# -gt 0; do
     printf >&2 " '%s'" $1
@@ -71,11 +71,11 @@ do_ambiguous() {
 while test $# -gt 0; do
   case "$1" in
   --v | --ve | --ver | --vers | --versi | --versio | --version)
-    echo "sotruss (Buildroot) 2.26"
+    echo "sotruss (crosstool-NG crosstool-ng-1.22.0-88-g8460611) 2.19"
     printf $"Copyright (C) %s Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-" "2017"
+" "2014"
     printf $"Written by %s.\n" "Ulrich Drepper"
     exit 0
     ;;
@@ -150,3 +150,6 @@ export SOTRUSS_EXIT
 export LD_AUDIT="$lib"
 
 exec "$@"
+# Local Variables:
+#  mode:ksh
+# End:

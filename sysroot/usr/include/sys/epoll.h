@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2017 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,7 +21,13 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <bits/types/sigset_t.h>
+/* Get __sigset_t.  */
+#include <bits/sigset.h>
+
+#ifndef __sigset_t_defined
+# define __sigset_t_defined
+typedef __sigset_t sigset_t;
+#endif
 
 /* Get the platform-dependent flags.  */
 #include <bits/epoll.h>
@@ -55,8 +61,6 @@ enum EPOLL_EVENTS
 #define EPOLLHUP EPOLLHUP
     EPOLLRDHUP = 0x2000,
 #define EPOLLRDHUP EPOLLRDHUP
-    EPOLLEXCLUSIVE = 1u << 28,
-#define EPOLLEXCLUSIVE EPOLLEXCLUSIVE
     EPOLLWAKEUP = 1u << 29,
 #define EPOLLWAKEUP EPOLLWAKEUP
     EPOLLONESHOT = 1u << 30,

@@ -1,4 +1,4 @@
-/* Copyright (C) 1996-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1996-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 /* Get definitions from kernel header file.  */
 #include <linux/if_ether.h>
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,10 +70,10 @@ __BEGIN_DECLS
  */
 struct	ether_arp {
 	struct	arphdr ea_hdr;		/* fixed-size header */
-	uint8_t arp_sha[ETH_ALEN];	/* sender hardware address */
-	uint8_t arp_spa[4];		/* sender protocol address */
-	uint8_t arp_tha[ETH_ALEN];	/* target hardware address */
-	uint8_t arp_tpa[4];		/* target protocol address */
+	u_int8_t arp_sha[ETH_ALEN];	/* sender hardware address */
+	u_int8_t arp_spa[4];		/* sender protocol address */
+	u_int8_t arp_tha[ETH_ALEN];	/* target hardware address */
+	u_int8_t arp_tpa[4];		/* target protocol address */
 };
 #define	arp_hrd	ea_hdr.ar_hrd
 #define	arp_pro	ea_hdr.ar_pro
@@ -88,17 +88,17 @@ struct	ether_arp {
  */
 #define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
 	/* struct in_addr *ipaddr; */ \
-	/* uint8_t enaddr[ETH_ALEN]; */ \
+	/* u_char enaddr[ETH_ALEN];	   */ \
 { \
 	(enaddr)[0] = 0x01; \
 	(enaddr)[1] = 0x00; \
 	(enaddr)[2] = 0x5e; \
-	(enaddr)[3] = ((uint8_t *)ipaddr)[1] & 0x7f; \
-	(enaddr)[4] = ((uint8_t *)ipaddr)[2]; \
-	(enaddr)[5] = ((uint8_t *)ipaddr)[3]; \
+	(enaddr)[3] = ((u_int8_t *)ipaddr)[1] & 0x7f; \
+	(enaddr)[4] = ((u_int8_t *)ipaddr)[2]; \
+	(enaddr)[5] = ((u_int8_t *)ipaddr)[3]; \
 }
 
 __END_DECLS
-#endif /* __USE_MISC */
+#endif /* __USE_BSD */
 
 #endif /* netinet/if_ether.h */

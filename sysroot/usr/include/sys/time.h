@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -21,15 +21,18 @@
 #include <features.h>
 
 #include <bits/types.h>
-#include <bits/types/time_t.h>
-#include <bits/types/struct_timeval.h>
+#define __need_time_t
+#include <time.h>
+#define __need_timeval
+#include <bits/time.h>
+
+#include <sys/select.h>
 
 #ifndef __suseconds_t_defined
 typedef __suseconds_t suseconds_t;
 # define __suseconds_t_defined
 #endif
 
-#include <sys/select.h>
 
 __BEGIN_DECLS
 
@@ -46,7 +49,7 @@ __BEGIN_DECLS
 #endif
 
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /* Structure crudely representing a timezone.
    This is obsolete and should never be used.  */
 struct timezone
@@ -68,7 +71,7 @@ typedef void *__restrict __timezone_ptr_t;
 extern int gettimeofday (struct timeval *__restrict __tv,
 			 __timezone_ptr_t __tz) __THROW __nonnull ((1));
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /* Set the current time of day and timezone information.
    This call is restricted to the super-user.  */
 extern int settimeofday (const struct timeval *__tv,
@@ -135,7 +138,7 @@ extern int setitimer (__itimer_which_t __which,
 extern int utimes (const char *__file, const struct timeval __tvp[2])
      __THROW __nonnull ((1));
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /* Same as `utimes', but does not follow symbolic links.  */
 extern int lutimes (const char *__file, const struct timeval __tvp[2])
      __THROW __nonnull ((1));
@@ -153,7 +156,7 @@ extern int futimesat (int __fd, const char *__file,
 #endif
 
 
-#ifdef __USE_MISC
+#ifdef __USE_BSD
 /* Convenience macros for operations on timevals.
    NOTE: `timercmp' does not work for >= or <=.  */
 # define timerisset(tvp)	((tvp)->tv_sec || (tvp)->tv_usec)
@@ -181,7 +184,7 @@ extern int futimesat (int __fd, const char *__file,
       (result)->tv_usec += 1000000;					      \
     }									      \
   } while (0)
-#endif	/* Misc.  */
+#endif	/* BSD */
 
 __END_DECLS
 

@@ -1,6 +1,6 @@
 /* Prototype declarations for complex math functions;
    helper file for <complex.h>.
-   Copyright (C) 1997-2017 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -44,9 +44,7 @@
 #error "Never use <bits/cmathcalls.h> directly; include <complex.h> instead."
 #endif
 
-#ifndef _Mdouble_complex_
-# define _Mdouble_complex_ _Mdouble_ _Complex
-#endif
+#define _Mdouble_complex_ _Mdouble_ _Complex
 
 
 /* Trigonometric functions.  */

@@ -1,5 +1,5 @@
 /* -mlong-double-64 compatibility mode for stdio functions.
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 # error "Never include <bits/stdio-ldbl.h> directly; use <stdio.h> instead."
 #endif
 
+__BEGIN_NAMESPACE_STD
 __LDBL_REDIR_DECL (fprintf)
 __LDBL_REDIR_DECL (printf)
 __LDBL_REDIR_DECL (sprintf)
@@ -37,13 +38,17 @@ __LDBL_REDIR_DECL (fscanf)
 __LDBL_REDIR_DECL (scanf)
 __LDBL_REDIR_DECL (sscanf)
 #endif
+__END_NAMESPACE_STD
 
-#if defined __USE_ISOC99 || defined __USE_UNIX98
+#if defined __USE_BSD || defined __USE_ISOC99 || defined __USE_UNIX98
+__BEGIN_NAMESPACE_C99
 __LDBL_REDIR_DECL (snprintf)
 __LDBL_REDIR_DECL (vsnprintf)
+__END_NAMESPACE_C99
 #endif
 
 #ifdef	__USE_ISOC99
+__BEGIN_NAMESPACE_C99
 # if !defined __USE_GNU && !defined __REDIRECT \
      && (defined __STRICT_ANSI__ || defined __USE_XOPEN2K)
 __LDBL_REDIR1_DECL (vfscanf, __nldbl___isoc99_vfscanf)
@@ -54,6 +59,7 @@ __LDBL_REDIR_DECL (vfscanf)
 __LDBL_REDIR_DECL (vsscanf)
 __LDBL_REDIR_DECL (vscanf)
 # endif
+__END_NAMESPACE_C99
 #endif
 
 #ifdef __USE_XOPEN2K8
@@ -72,7 +78,7 @@ __LDBL_REDIR_DECL (obstack_vprintf)
 #if __USE_FORTIFY_LEVEL > 0 && defined __fortify_function
 __LDBL_REDIR_DECL (__sprintf_chk)
 __LDBL_REDIR_DECL (__vsprintf_chk)
-# if defined __USE_ISOC99 || defined __USE_UNIX98
+# if defined __USE_BSD || defined __USE_ISOC99 || defined __USE_UNIX98
 __LDBL_REDIR_DECL (__snprintf_chk)
 __LDBL_REDIR_DECL (__vsnprintf_chk)
 # endif
