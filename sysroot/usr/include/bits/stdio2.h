@@ -1,5 +1,5 @@
 /* Checking macros for stdio functions.
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ __NTH (vsprintf (char *__restrict __s, const char *__restrict __fmt,
 				   __bos (__s), __fmt, __ap);
 }
 
-#if defined __USE_BSD || defined __USE_ISOC99 || defined __USE_UNIX98
+#if defined __USE_ISOC99 || defined __USE_UNIX98
 
 extern int __snprintf_chk (char *__restrict __s, size_t __n, int __flag,
 			   size_t __slen, const char *__restrict __format,
@@ -222,8 +222,7 @@ __NTH (obstack_vprintf (struct obstack *__restrict __obstack,
 
 #endif
 
-#if !defined __USE_ISOC11 \
-    || (defined __cplusplus && __cplusplus <= 201103L && !defined __USE_GNU)
+#if __GLIBC_USE (DEPRECATED_GETS)
 extern char *__gets_chk (char *__str, size_t) __wur;
 extern char *__REDIRECT (__gets_warn, (char *__str), gets)
      __wur __warnattr ("please use fgets or getline instead, gets can't "

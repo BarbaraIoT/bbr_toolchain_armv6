@@ -1,5 +1,5 @@
 /* `fd_set' type and related macros, and `select'/`pselect' declarations.
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -29,20 +29,15 @@
 /* Get __FD_* definitions.  */
 #include <bits/select.h>
 
-/* Get __sigset_t.  */
-#include <bits/sigset.h>
-
-#ifndef __sigset_t_defined
-# define __sigset_t_defined
-typedef __sigset_t sigset_t;
-#endif
+/* Get sigset_t.  */
+#include <bits/types/sigset_t.h>
 
 /* Get definition of timer specification structures.  */
-#define __need_time_t
-#define __need_timespec
-#include <time.h>
-#define __need_timeval
-#include <bits/time.h>
+#include <bits/types/time_t.h>
+#include <bits/types/struct_timeval.h>
+#ifdef __USE_XOPEN2K
+# include <bits/types/struct_timespec.h>
+#endif
 
 #ifndef __suseconds_t_defined
 typedef __suseconds_t suseconds_t;
@@ -58,7 +53,7 @@ typedef long int __fd_mask;
 /* It's easier to assume 8-bit bytes than to get CHAR_BIT.  */
 #define __NFDBITS	(8 * (int) sizeof (__fd_mask))
 #define	__FD_ELT(d)	((d) / __NFDBITS)
-#define	__FD_MASK(d)	((__fd_mask) 1 << ((d) % __NFDBITS))
+#define	__FD_MASK(d)	((__fd_mask) (1UL << ((d) % __NFDBITS)))
 
 /* fd_set for select and pselect.  */
 typedef struct

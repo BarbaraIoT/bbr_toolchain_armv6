@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -26,7 +26,21 @@
 
 __BEGIN_DECLS
 
-#include <signal.h>
+#include <bits/types.h>
+#ifndef __pid_t_defined
+typedef __pid_t pid_t;
+# define __pid_t_defined
+#endif
+
+#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
+# include <signal.h>
+#endif
+
+#if defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K8
+/* Some older standards require the contents of struct rusage to be
+   defined here.  */
+# include <bits/types/struct_rusage.h>
+#endif
 
 /* These macros could also be defined in <stdlib.h>.  */
 #if !defined _STDLIB_H || (!defined __USE_XOPEN && !defined __USE_XOPEN2K8)
@@ -34,68 +48,29 @@ __BEGIN_DECLS
    bits to `waitpid', `wait3', and `wait4'.  */
 # include <bits/waitflags.h>
 
-# ifdef	__USE_BSD
-
-/* Lots of hair to allow traditional BSD use of `union wait'
-   as well as POSIX.1 use of `int' for the status word.  */
-
-#  if defined __GNUC__ && !defined __cplusplus
-#   define __WAIT_INT(status) \
-  (__extension__ (((union { __typeof(status) __in; int __i; }) \
-		   { .__in = (status) }).__i))
-#  else
-#   define __WAIT_INT(status)	(*(const int *) &(status))
-#  endif
-
-/* This is the type of the argument to `wait'.  The funky union
-   causes redeclarations with either `int *' or `union wait *' to be
-   allowed without complaint.  __WAIT_STATUS_DEFN is the type used in
-   the actual function definitions.  */
-
-#  if !defined __GNUC__ || __GNUC__ < 2 || defined __cplusplus
-#   define __WAIT_STATUS	void *
-#   define __WAIT_STATUS_DEFN	void *
-#  else
-/* This works in GCC 2.6.1 and later.  */
-typedef union
-  {
-    union wait *__uptr;
-    int *__iptr;
-  } __WAIT_STATUS __attribute__ ((__transparent_union__));
-#   define __WAIT_STATUS_DEFN	int *
-#  endif
-
-# else /* Don't use BSD.  */
-
-#  define __WAIT_INT(status)	(status)
-#  define __WAIT_STATUS		int *
-#  define __WAIT_STATUS_DEFN	int *
-
-# endif /* Use BSD.  */
-
 /* This will define all the `__W*' macros.  */
 # include <bits/waitstatus.h>
 
-# define WEXITSTATUS(status)	__WEXITSTATUS (__WAIT_INT (status))
-# define WTERMSIG(status)	__WTERMSIG (__WAIT_INT (status))
-# define WSTOPSIG(status)	__WSTOPSIG (__WAIT_INT (status))
-# define WIFEXITED(status)	__WIFEXITED (__WAIT_INT (status))
-# define WIFSIGNALED(status)	__WIFSIGNALED (__WAIT_INT (status))
-# define WIFSTOPPED(status)	__WIFSTOPPED (__WAIT_INT (status))
+# define WEXITSTATUS(status)	__WEXITSTATUS (status)
+# define WTERMSIG(status)	__WTERMSIG (status)
+# define WSTOPSIG(status)	__WSTOPSIG (status)
+# define WIFEXITED(status)	__WIFEXITED (status)
+# define WIFSIGNALED(status)	__WIFSIGNALED (status)
+# define WIFSTOPPED(status)	__WIFSTOPPED (status)
 # ifdef __WIFCONTINUED
-#  define WIFCONTINUED(status)	__WIFCONTINUED (__WAIT_INT (status))
+#  define WIFCONTINUED(status)	__WIFCONTINUED (status)
 # endif
 #endif	/* <stdlib.h> not included.  */
 
-#ifdef	__USE_BSD
+#ifdef	__USE_MISC
 # define WCOREFLAG		__WCOREFLAG
-# define WCOREDUMP(status)	__WCOREDUMP (__WAIT_INT (status))
+# define WCOREDUMP(status)	__WCOREDUMP (status)
 # define W_EXITCODE(ret, sig)	__W_EXITCODE (ret, sig)
 # define W_STOPCODE(sig)	__W_STOPCODE (sig)
 #endif
 
 /* The following values are used by the `waitid' function.  */
-#if defined __USE_SVID || defined __USE_XOPEN || defined __USE_XOPEN2K8
+#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
 typedef enum
 {
   P_ALL,		/* Wait for any child.  */
@@ -110,9 +85,9 @@ typedef enum
 
    This function is a cancellation point and therefore not marked with
    __THROW.  */
-extern __pid_t wait (__WAIT_STATUS __stat_loc);
+extern __pid_t wait (int *__stat_loc);
 
-#ifdef	__USE_BSD
+#ifdef	__USE_MISC
 /* Special values for the PID argument to `waitpid' and `wait4'.  */
 # define WAIT_ANY	(-1)	/* Any process.  */
 # define WAIT_MYPGRP	0	/* Any process in my process group.  */
@@ -135,15 +110,13 @@ extern __pid_t wait (__WAIT_STATUS __stat_loc);
    __THROW.  */
 extern __pid_t waitpid (__pid_t __pid, int *__stat_loc, int __options);
 
-#if defined __USE_SVID || defined __USE_XOPEN || defined __USE_XOPEN2K8
+#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K8
 # ifndef __id_t_defined
-#  include <bits/types.h>
 typedef __id_t id_t;
 #  define __id_t_defined
 # endif
 
-# define __need_siginfo_t
-# include <bits/siginfo.h>
+# include <bits/types/siginfo_t.h>
 
 /* Wait for a childing matching IDTYPE and ID to change the status and
    place appropriate information in *INFOP.
@@ -160,7 +133,8 @@ extern int waitid (idtype_t __idtype, __id_t __id, siginfo_t *__infop,
 		   int __options);
 #endif
 
-#if defined __USE_BSD || defined __USE_XOPEN_EXTENDED
+#if defined __USE_MISC \
+    || (defined __USE_XOPEN_EXTENDED && !defined __USE_XOPEN2K)
 /* This being here makes the prototypes valid whether or not
    we have already included <sys/resource.h> to define `struct rusage'.  */
 struct rusage;
@@ -170,15 +144,15 @@ struct rusage;
    nil, store information about the child's resource usage there.  If the
    WUNTRACED bit is set in OPTIONS, return status for stopped children;
    otherwise don't.  */
-extern __pid_t wait3 (__WAIT_STATUS __stat_loc, int __options,
+extern __pid_t wait3 (int *__stat_loc, int __options,
 		      struct rusage * __usage) __THROWNL;
 #endif
 
-#ifdef __USE_BSD
+#ifdef __USE_MISC
 /* PID is like waitpid.  Other args are like wait3.  */
-extern __pid_t wait4 (__pid_t __pid, __WAIT_STATUS __stat_loc, int __options,
+extern __pid_t wait4 (__pid_t __pid, int *__stat_loc, int __options,
 		      struct rusage *__usage) __THROWNL;
-#endif /* Use BSD.  */
+#endif /* Use misc.  */
 
 
 __END_DECLS

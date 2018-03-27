@@ -1,4 +1,4 @@
-/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
    Written by Per Bothner <bothner@cygnus.com>.
 
@@ -119,6 +119,7 @@
 # define _IO_FLAGS2_SCANF_STD 16
 # define _IO_FLAGS2_NOCLOSE 32
 # define _IO_FLAGS2_CLOEXEC 64
+# define _IO_FLAGS2_NEED_LOCK 128
 #endif
 
 /* These are "formatting flags" matching the iostream fmtflags enum values. */
@@ -143,14 +144,9 @@
 
 struct _IO_jump_t;  struct _IO_FILE;
 
-/* Handle lock.  */
-#ifdef _IO_MTSAFE_IO
-# if defined __GLIBC__ && __GLIBC__ >= 2
-#  include <bits/stdio-lock.h>
-# else
-/*# include <comthread.h>*/
-# endif
-#else
+/* During the build of glibc itself, _IO_lock_t will already have been
+   defined by internal headers.  */
+#ifndef _IO_lock_t_defined
 typedef void _IO_lock_t;
 #endif
 
@@ -297,14 +293,13 @@ struct _IO_FILE_complete
   struct _IO_wide_data *_wide_data;
   struct _IO_FILE *_freeres_list;
   void *_freeres_buf;
-  size_t _freeres_size;
 # else
   void *__pad1;
   void *__pad2;
   void *__pad3;
   void *__pad4;
-  size_t __pad5;
 # endif
+  size_t __pad5;
   int _mode;
   /* Make sure we don't get into trouble again.  */
   char _unused2[15 * sizeof (int) - 4 * sizeof (void *) - sizeof (size_t)];
@@ -358,7 +353,7 @@ typedef int __io_seek_fn (void *__cookie, _IO_off64_t *__pos, int __w);
 typedef int __io_close_fn (void *__cookie);
 
 
-#ifdef _GNU_SOURCE
+#ifdef __USE_GNU
 /* User-visible names for the above.  */
 typedef __io_read_fn cookie_read_function_t;
 typedef __io_write_fn cookie_write_function_t;
@@ -446,20 +441,19 @@ extern void _IO_flockfile (_IO_FILE *) __THROW;
 extern void _IO_funlockfile (_IO_FILE *) __THROW;
 extern int _IO_ftrylockfile (_IO_FILE *) __THROW;
 
-#ifdef _IO_MTSAFE_IO
-# define _IO_peekc(_fp) _IO_peekc_locked (_fp)
-# define _IO_flockfile(_fp) \
-  if (((_fp)->_flags & _IO_USER_LOCK) == 0) _IO_flockfile (_fp)
-# define _IO_funlockfile(_fp) \
-  if (((_fp)->_flags & _IO_USER_LOCK) == 0) _IO_funlockfile (_fp)
-#else
-# define _IO_peekc(_fp) _IO_peekc_unlocked (_fp)
-# define _IO_flockfile(_fp) /**/
-# define _IO_funlockfile(_fp) /**/
-# define _IO_ftrylockfile(_fp) /**/
-# define _IO_cleanup_region_start(_fct, _fp) /**/
-# define _IO_cleanup_region_end(_Doit) /**/
-#endif /* !_IO_MTSAFE_IO */
+#define _IO_peekc(_fp) _IO_peekc_unlocked (_fp)
+#define _IO_flockfile(_fp) /**/
+#define _IO_funlockfile(_fp) /**/
+#define _IO_ftrylockfile(_fp) /**/
+#ifndef _IO_cleanup_region_start
+#define _IO_cleanup_region_start(_fct, _fp) /**/
+#endif
+#ifndef _IO_cleanup_region_end
+#define _IO_cleanup_region_end(_Doit) /**/
+#endif
+
+#define _IO_need_lock(_fp) \
+  (((_fp)->_flags2 & _IO_FLAGS2_NEED_LOCK) != 0)
 
 extern int _IO_vfscanf (_IO_FILE * __restrict, const char * __restrict,
 			_IO_va_list, int *__restrict);
