@@ -1,1 +1,0 @@
-Toolchain for ARM v6 devices
